@@ -17,8 +17,12 @@ def main():
     ret = arm.connect("10.27.1.254")
     
     gripper = RGD(port='COM3')
-    while gripper.read_state() != 1:
-        time.sleep(0.05)
+    time.sleep(3)
+
+    # print(gripper.read_state())
+    # while gripper.read_state() != 1:
+    #     print(gripper.read_state())
+    #     time.sleep(0.05)
     
     try:
         assert ret == StatusCodeEnum.OK
@@ -29,7 +33,10 @@ def main():
         pose, ret = arm.motion.get_current_pose(const.JOINT,0,0)
         assert ret == StatusCodeEnum.OK
         printPose(pose)
-        pose.joint.j1 += 5
+
+        # pose.joint.j1 += 2
+        # pose.joint.j2 -= 1
+
         pose.cartData.posture = None # posture
         # position = pose.cartData.position
         # position.x=0
@@ -43,10 +50,31 @@ def main():
         # position.b = 68.60407292110962
         # position.c = 60.045417745984444
         printPose(pose)
+
+        while gripper.read_state() != 1:
+            time.sleep(0.05)
+
+        pose.joint.j2 -= 3
         ret = arm.motion.move_to_pose(pose, const.MOVE_JOINT)
         assert ret == StatusCodeEnum.OK
         while arm.get_robot_status()[1] != RobotStatusEnum.ROBOT_IDLE:
             time.sleep(0.5)
+
+        gripper.set_pos(val=0, blocking=False)
+        # while gripper.read_state() != 1:
+        #     time.sleep(0.05)
+
+        pose.joint.j2 += 3
+        ret = arm.motion.move_to_pose(pose, const.MOVE_JOINT)
+        assert ret == StatusCodeEnum.OK
+        while arm.get_robot_status()[1] != RobotStatusEnum.ROBOT_IDLE:
+            time.sleep(0.5)
+
+        gripper.set_pos(val=1000, blocking=True)
+        # while gripper.read_state() != 1:
+        #     time.sleep(0.05)
+
+
     except AssertionError:
         print(f"{ret.code} {ret}")
         print(traceback.print_exc())
